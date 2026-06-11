@@ -2,7 +2,7 @@ import { buildApiUrl, fetchResponse } from '../../utils/index.js';
 
 export async function getv2ray_config(e) {
     const apiurl = buildApiUrl(e.urls.join(','), e.sub, 'v2ray');
-    const res = await fetchResponse(apiurl, e.userAgent);
+    const res = await fetchResponse(apiurl, e.userAgent, e.globalUaKeyword);
     if (res.data !== undefined && res.data !== null && res.data !== '') {
         return {
             status: res.status,

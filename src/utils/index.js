@@ -19,9 +19,12 @@ export function buildApiUrl(rawUrl, BASE_API, ua) {
     return `${BASE_API}/sub?${params}`;
 }
 // 处理请求
-export async function fetchResponse(url, userAgent) {
+export async function fetchResponse(url, userAgent, globalUaKeyword) {
     if (!userAgent) {
         userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3';
+    }
+    if (globalUaKeyword) {
+        userAgent = `${userAgent} ${globalUaKeyword}`;
     }
     let response;
     try {
@@ -161,7 +164,7 @@ export async function fetchipExtract() {
  */
 export async function fetchWithFallback(url, options) {
     if (options.fallback) {
-        let res = await fetchResponse(url, options.userAgent);
+        let res = await fetchResponse(url, options.userAgent, options.globalUaKeyword);
         if (options.target === 'mihomo') {
             if (res?.data?.proxies && Array.isArray(res.data.proxies) && res.data.proxies.length > 0) {
                 return res;
@@ -175,5 +178,5 @@ export async function fetchWithFallback(url, options) {
     }
     // 如果第一次请求失败，尝试使用构建的API URL
     const apiUrl = buildApiUrl(url, options.sub, options.target);
-    return await fetchResponse(apiUrl, options.userAgent);
+    return await fetchResponse(apiUrl, options.userAgent, options.globalUaKeyword);
 }

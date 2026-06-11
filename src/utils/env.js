@@ -48,6 +48,7 @@ export function buildConfig(request, env, isNode = false) {
     data.sub = getEnv('SUB', subapi);
     data.beian = getEnv('BEIAN', beiantext);
     data.beianurl = getEnv('BEIANURL', beiandizi);
+    data.globalUaKeyword = getEnv('GLOBAL_UA_KEYWORD', '');
 
     const templateBaseUrl = getEnv('TEMPLATE_URL', '');
     if (templateBaseUrl) data.templateBaseUrl = templateBaseUrl;
