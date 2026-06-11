@@ -4,13 +4,6 @@ main = "dist/_worker.js"
 compatibility_date = "2025-04-16"
 compatibility_flags = ["nodejs_compat"]
 
-[vars]
-BEIAN = ""
-BEIANURL = ""
-SUB = ""
-CHECK_UA = "true"
-TEMPLATE_URL = ""
-
 [assets]
 directory = "./template"
 binding = "ASSETS"

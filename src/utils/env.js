@@ -50,6 +50,7 @@ export function buildConfig(request, env, isNode = false) {
     data.beianurl = getEnv('BEIANURL', beiandizi);
 
     const templateBaseUrl = getEnv('TEMPLATE_URL', '');
+    if (templateBaseUrl) data.templateBaseUrl = templateBaseUrl;
     const template = getParam('template');
     if (template) {
         if (templateBaseUrl) {

@@ -1,6 +1,21 @@
 import configs from './config.js';
 
 export async function getFakePage(e) {
+    let configData = JSON.parse(configs());
+    if (e.templateBaseUrl) {
+        try {
+            const res = await fetch(`${e.templateBaseUrl}/templates.json`);
+            if (res.ok) {
+                const externalTemplates = await res.json();
+                for (const [target, templates] of Object.entries(externalTemplates)) {
+                    if (configData[target]) {
+                        configData[target].templates = templates;
+                    }
+                }
+            }
+        } catch (_) {}
+    }
+    const configJson = JSON.stringify(configData);
     return `
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -546,7 +561,7 @@ export async function getFakePage(e) {
     </a>
 
     <script>
-        const MODES_META = ${configs()};
+        const MODES_META = ${configJson};
 
         let currentMode = 'mihomo';
 
