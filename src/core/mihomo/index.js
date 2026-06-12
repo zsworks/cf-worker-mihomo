@@ -3,14 +3,6 @@ import getProxies_Data from './proxies.js';
 import clashConfig from '../../config/mihomo.js';
 
 export async function getmihomo_config(e) {
-    const config = structuredClone(clashConfig);
-    if (e.globalUaKeyword) {
-        config['global-ua'] = `${config['global-ua']} ${e.globalUaKeyword}`;
-    }
-    // 客户端验证
-    if (e.checkUA && !/meta|clash.meta|clash|clashverge|mihomo/i.test(e.userAgent)) {
-        throw new Error('不支持的客户端');
-    }
     if (!e.rule) {
         throw new Error('缺少规则模板');
     }
@@ -35,11 +27,30 @@ export async function getmihomo_config(e) {
     e.Package = alldata[2];
     e.Address = alldata[3];
 
-    // 合并代理数据
-    Rule_Data.data.proxies = [...(Rule_Data?.data?.proxies || []), ...Proxies_Data.data.proxies];
-    Rule_Data.data['proxy-groups'] = getProxies_Grouping(Proxies_Data.data, Rule_Data.data, e);
-    Rule_Data.data['proxy-providers'] = Proxies_Data.data.providers;
-    applyTemplate(config, Rule_Data.data, e);
+    let config;
+    if (e.full) {
+        // 模板作为完整配置，只替换代理相关字段
+        config = Rule_Data.data;
+        config.proxies = [...(config.proxies || []), ...Proxies_Data.data.proxies];
+        config['proxy-groups'] = getProxies_Grouping(Proxies_Data.data, config, e);
+        config['proxy-providers'] = { ...(config['proxy-providers'] || {}), ...Proxies_Data.data.providers };
+        applyOverrides(config, e);
+    } else {
+        // 硬编码基础配置 + 合并模板代理字段
+        config = structuredClone(clashConfig);
+        if (e.globalUaKeyword) {
+            config['global-ua'] = `${config['global-ua']} ${e.globalUaKeyword}`;
+        }
+        // 客户端验证
+        if (e.checkUA && !/meta|clash.meta|clash|clashverge|mihomo/i.test(e.userAgent)) {
+            throw new Error('不支持的客户端');
+        }
+        // 合并代理数据
+        Rule_Data.data.proxies = [...(Rule_Data?.data?.proxies || []), ...Proxies_Data.data.proxies];
+        Rule_Data.data['proxy-groups'] = getProxies_Grouping(Proxies_Data.data, Rule_Data.data, e);
+        Rule_Data.data['proxy-providers'] = Proxies_Data.data.providers;
+        applyTemplate(config, Rule_Data.data, e);
+    }
     return {
         status: Proxies_Data.status,
         headers: Proxies_Data.headers,
@@ -83,6 +94,45 @@ export function applyTemplate(top, rule, e) {
     }
     if (e.adgdns) {
         top.dns.nameserver = [`https://dns.adguard-dns.com/dns-query#${proxyName}`];
+        top.dns['nameserver-policy']['RULE-SET:private_domain,cn_domain'] = ['https://doh.18bit.cn/dns-query#DIRECT'];
+    }
+    return top;
+}
+
+/**
+ * 对完整模板配置应用运行时覆盖（DNS proxy 替换、TUN 开关等）
+ * @param {Object} top - 完整模板配置对象
+ * @param {Object} e - 请求参数
+ */
+export function applyOverrides(top, e) {
+    if (e.log) top['log-level'] = e.log;
+    if (e.globalUaKeyword) {
+        top['global-ua'] = `${top['global-ua'] || 'clash.meta'} ${e.globalUaKeyword}`;
+    }
+    const proxyName = top['proxy-groups']?.[0]?.name;
+    if (top.dns?.nameserver && proxyName) {
+        top.dns.nameserver = top.dns.nameserver.map((ns) => {
+            if (typeof ns === 'string') {
+                return ns.replace(/#PROXY/g, `#${proxyName}`);
+            }
+            return ns;
+        });
+    }
+    if (e.tun && top.tun) {
+        top.tun.enable = false;
+    } else if (top.tun) {
+        if (e.exclude_address && e.Address) {
+            top.tun['route-address'] = ['0.0.0.0/1', '128.0.0.0/1', '::/1', '8000::/1'];
+            top.tun['route-exclude-address'] = e.Address || [];
+        }
+        if (e.exclude_package && e.Package) {
+            top.tun['include-package'] = [];
+            top.tun['exclude-package'] = e.Package || [];
+        }
+    }
+    if (e.adgdns && top.dns && proxyName) {
+        top.dns.nameserver = [`https://dns.adguard-dns.com/dns-query#${proxyName}`];
+        if (!top.dns['nameserver-policy']) top.dns['nameserver-policy'] = {};
         top.dns['nameserver-policy']['RULE-SET:private_domain,cn_domain'] = ['https://doh.18bit.cn/dns-query#DIRECT'];
     }
     return top;
