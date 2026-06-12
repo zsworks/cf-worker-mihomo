@@ -26,8 +26,10 @@ export default function configs() {
 ✔ 仅代理: 关闭tun，纯http/socks代理
 
 ✔ fallback: 获取原节点格式和流量信息
+
+✔ 完整模板: 使用模板的 DNS/Sniffer/TUN 等完整配置，而非硬编码默认值
             `,
-            protocolList: ['udp', 'ech', 'relay', 'ep', 'ea', 'adgdns', 'tun', 'fallback', 'log'],
+            protocolList: ['udp', 'ech', 'relay', 'ep', 'ea', 'adgdns', 'tun', 'fallback', 'full', 'log'],
             protocolLabels: {
                 udp: 'UDP',
                 ech: 'ECH',
@@ -37,6 +39,7 @@ export default function configs() {
                 adgdns: '去广告DNS',
                 tun: '仅代理',
                 fallback: 'fallback',
+                full: '完整模板',
                 log: {
                     label: '日志等级',
                     levels: ['silent', 'error', 'warning', 'info', 'debug'],
